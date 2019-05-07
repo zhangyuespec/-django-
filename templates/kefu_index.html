@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/fontawesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/mystyle.css">
+    <link rel="stylesheet" href="/static/sweetalert/sweetalert.css">
+</head>
+<body>
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">酒店管理系统</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav ">
+                <li class="active"><a href="/kefu_index/">客户订房 <span class="sr-only">(current)</span></a></li>
+                {#                <li><a href="/useful/">客户订房</a></li>#}
+                {% if request.user.is_kefu %}
+                    <li><a href="/kefu_order/{{ request.user.pk }}">查看信息</a></li>
+                {% else %}
+                    <li><a href="/user_order/{{ request.user.pk }}">查看信息</a></li>
+                {% endif %}
+            </ul>
+            <form class="navbar-form navbar-left" method="get" action="/find_e/">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="text" name="book_name" class="form-control" placeholder="Search">
+                </div>
+                <button type="submit" class="btn btn-default">输入房间类型查询,查询空房</button>
+            </form>
+            <ul class="nav navbar-nav navbar-right">
+                {% if request.user.username %}
+                    <li><a href="#">{{ request.user.username }}</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">个人中心 <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            {#                            <li><a href="/home/">个人主页</a></li>#}
+                            <li role="separator" class="divider"></li>
+                            <li><a href="/logout/">注销</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li><a href="/login/">登录</a></li>
+                    <li><a href="/reg/">注册</a></li>
+
+                {% endif %}
+
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+<!--主页面开始-->
+<div class="container-fluid">
+    {% if request.user.username %}
+        <div class="row">
+
+            <div>
+                <div class="col-md-1"></div>
+                <div class="col-md-4">
+                    <h4 style="color: #000066">全部房间</h4>
+                    <!--文章列表-->
+                    <div class="article-list">
+                        {% for foo in room_list %}
+                            <div class="article">
+
+                                <div class="media">
+                                    <div class="media-left media-middle">
+                                        <label for="id_span"><a
+                                                href="/find/{{ foo.pk }}" id="id_span">
+
+                                        </a>
+                                        </label>
+                                    </div>
+
+                                    <div class="media-body">
+                                        <h3 style="color: #8a6d3b;">房间类型:{{ foo.room_type }}</h3>
+                                        <p>房屋编号:{{ foo.pk }}</p>
+                                        <p>房间描述:{{ foo.room_discribe }}</p>
+                                        <p>房间价格:{{ foo.price }}</p>
+                                        <p>房间折扣:   {% for room_discount in foo.room_discount_set.all %}
+                                            {{ room_discount.discount }}
+                                        {% endfor %}</p>
+
+                                        <p>房屋状态:{{ foo.status }}</p>
+                                        {% if foo.status == "空闲" %}
+                                            <p style="color: #761c19">可预订,请在记住房间编号,在页面右边输入预定</p>
+                                        {% elif foo.status == "未打扫" %}
+                                            等待保洁打扫
+                                        {% elif foo.status == "被预定" %}
+                                            {% for user_room in foo.user_room_set.all %}
+                                                {% if request.user.username == user_room.user.username %}
+                                                    <p style="color: #761c19"> 可退房用户id为:{{ user_room.user.nid }},请找客服前台退房</p>
+                                                {% else %}
+                                                    <p style="color: #761c19">
+                                                        已被用户"{{ user_room.user.username }}",用户id为:{{ user_room.user.nid }}从{{ user_room.create_time }}预定至{{ user_room.use_time }}天后</p>
+                                                {% endif %}
+
+                                            {% endfor %}
+
+                                            {% elif foo.status != "空闲" and foo.status != "未打扫" and foo.status != "被预定" %}
+                                            等待房间状态稳定即可预定
+                                        {% else %}
+                                            可退房,请寻求客服帮助退房
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <hr color="red">
+                                {# 分割线 #}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+                    <!--文章列表结束-->
+                </div>
+                <div class="col-md-2">
+                    <h3 style="color: #8a6d3b">预定</h3>
+                    请输入需要预定的客户的用户编号: <input type="text" id="username"><br/>
+                    <br>
+                    输入您要预定的房间编号:<input type="text" id="room_pk"><br/>
+                    <br>
+                    输入您要预定的天数: <input type="text" id="day"><br>
+                    <br>
+                    <a href="" id="kefu_yuding" user="{{ request.user.pk }} ">预定</a>
+                </div>
+                <div class="col-md-2">
+                    <h3 style="color: #8a6d3b">退订</h3>
+                    请输入需要退订的客户的用户编号: <input type="text" id="tuiding_username"><br/>
+                    <br>
+                    输入您要退订的房间编号:<input type="text" id="tuiding_room_pk"><br/>
+                    <br>
+                    <a href="" id="kefu_tuiding" user="{{ request.user.pk }} ">退订</a>
+                </div>
+                <div class="col-md-2">
+                    <h3 style="color: #8a6d3b">设置房间状态</h3>
+                    请输入房间编号: <input type="text" id="room_id_status"><br>
+                    <br>
+                    请输入房间状态: <input type="text" id="room_status"><br>
+                    <br>
+                    <a href="" id="change_status" user="{{ request.user.pk }} ">执行</a>
+                </div>
+            </div>
+        </div>
+        </div>
+    {% else %}
+        先<a href="/login/">登录 </a>,才能查看房间
+        没有账号,请<a href="/reg/">注册 </a>
+    {% endif %}
+
+</div>
+<!--主页面结束-->
+
+
+<script src="/static/jquery-3.3.1.js"></script>
+<script src="/static/bootstrap/js/bootstrap.min.js"></script>
+<script src="/static/sweetalert/sweetalert.js"></script>
+</body>
+<script>
+    $("#kefu_yuding").click(function () {
+        var user_name = $("#username").val();
+        var user_pk = $("#kefu_yuding").attr("user");
+        var room_pk = $("#room_pk").val();
+        var day = $("#day").val();
+        $("#kefu_yuding").attr("href", "/kefu_yuding/" + room_pk + "/" + day + "/" + user_name);
+    })
+</script>
+<script>
+    $("#change_status").click(function () {
+        var room_pk = $("#room_id_status").val();
+        var room_satus = $("#room_status").val();
+        $("#change_status").attr("href", "/change_status/" + room_pk + "/" + room_satus)
+    })
+</script>
+<script>
+    $("#kefu_tuiding").click(function () {
+        var tuiding_username = $("#tuiding_username").val();
+        var tuiding_room_pk = $("#tuiding_room_pk").val();
+        $("#kefu_tuiding").attr("href", "/kefu_tuiding/" + tuiding_username + "/" + tuiding_room_pk);
+    })
+</script>
+</html>

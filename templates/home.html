@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/fontawesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/mystyle.css">
+    <link rel="stylesheet" href="/static/sweetalert/sweetalert.css">
+</head>
+<style>
+    .int {
+        height: 30px;
+        text-align: left;
+        width: 600px;
+    }
+
+    label {
+        width: 200px;
+        margin-left: 20px;
+    }
+
+    .high {
+        color: red;
+    }
+
+    .msg {
+        font-size: 13px;
+    }
+
+    .onError {
+        color: red;
+    }
+
+    .onSuccess {
+        color: green;
+    }
+</style>
+<body>
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">酒店管理系统</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav ">
+                {% if request.user.is_kefu %}
+                    <li class="active"><a href="/kefu_index/">客户订房 <span class="sr-only">(current)</span></a></li>
+                {% else %}
+                    <li class="active"><a href="/index/">客户订房 <span class="sr-only">(current)</span></a></li>
+
+                {% endif %}
+                {#                <li class="active"><a href="/index/">客户订房 <span class="sr-only">(current)</span></a></li>#}
+                {#                <li><a href="/useful/">客户订房</a></li>#}
+                {% if request.user.is_kefu %}
+                    <li><a href="/kefu_order/{{ request.user.pk }}">查看信息</a></li>
+                {% else %}
+                    <li><a href="/user_order/{{ request.user.pk }}">查看信息</a></li>
+                {% endif %}
+            </ul>
+            <form class="navbar-form navbar-left" method="get" action="/find_e/">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="text" name="book_name" class="form-control" placeholder="Search">
+                </div>
+                <button type="submit" class="btn btn-default">输入房间类型,查询空房</button>
+            </form>
+            <ul class="nav navbar-nav navbar-right">
+                {% if request.user.username %}
+                    <li><a href="#">{{ request.user.username }}</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">个人中心 <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            {#                            <li><a href="/home/">个人主页</a></li>#}
+                            <li role="separator" class="divider"></li>
+                            <li><a href="/logout/">注销</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li><a href="/login/">登录</a></li>
+                    <li><a href="/reg/">注册</a></li>
+
+                {% endif %}
+
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+<!--主页面开始-->
+<div class="container-fluid">
+    {% if request.user.username %}
+        <div class="row">
+
+        <div>
+            <div class="col-md-2">
+                <h1 style="color: #1b6d85">修改密码</h1>
+                <form action="/re_password/{{ request.user.username }}" method="post">
+                    {% csrf_token %}
+                    <p>用户:{{ request.user.username }}</p>
+                    <p>设置新密码:<input type="text" name="password"></p>
+                    <p>确认新密码:<input type="text" name="re_password"></p>
+                    <p><input type="submit"></p>
+                </form>
+            </div>
+            <div class="col-md-4">
+
+                <!--文章列表-->
+                <div class="article-list">
+                    <h1 style="color: #1b6d85">正在进行中订单</h1>
+                    {% for foo in user_room %}
+                        <h3 style="color: #985f0d">房间类型:{{ foo.room.room_type }}</h3>
+                        <p>房间编号:{{ foo.room.pk }}</p>
+                        <p>房间价格:{{ foo.room.price }}</p>
+                        <p>预定开始时间:{{ foo.create_time }}</p>
+                        <p>预定天数:{{ foo.use_time }}</p>
+                        {% if request.user.is_kefu %}
+                            <p>预定用户:{{ foo.user.username }}</p>
+                        {% endif %}
+                        <br>
+                    {% endfor %}
+
+                </div>
+                <!--文章列表结束-->
+            </div>
+            <div class="col-md-4">
+                <div class="article-list">
+                    <h1 style="color: #1b6d85">历史订单</h1>
+                    {% for foo in user_order_room %}
+                        <h3 style="color: #985f0d">房间类型:{{ foo.room.room_type }}</h3>
+                        <p>房间编号:{{ foo.room.pk }}</p>
+                        <p>房间价格:{{ foo.room.price }}</p>
+                        <p>预定开始时间:{{ foo.create_time }}</p>
+                        <p>预定天数:{{ foo.use_time }}</p>
+                        {% if request.user.is_kefu %}
+                            <p>预定用户:{{ foo.user.username }}</p>
+                        {% endif %}
+                        <br>
+                    {% endfor %}
+
+                </div>
+            </div>
+            <div class="col-md-2">
+                <h1 style="color: #1b6d85">用户信息</h1>
+                {% for foo in user_info %}
+                    <p>用户名:{{ foo.username }}</p>
+                    <p>邮箱:{{ foo.email }}</p>
+                    <p>创建时间:{{ foo.create_time }}</p>
+                    <p>
+                        {% if foo.is_kefu %}
+                            用户等级:客服
+                        {% else %}
+                            用户等级:普通会员
+                        {% endif %}
+                    </p>
+                {% endfor %}
+
+            </div>
+            {% if request.user.is_kefu %}
+                <div class="col-md-2">
+                <h3 style="color: #8a6d3b">交易总额</h3>
+                {% for money in money_list %}
+                    {{ money.count }}
+                {% endfor %}
+            {% endif %}
+            </div>
+        </div>
+    {% else %}
+        先<a href="/login/">登录 </a>,才能查看房间
+        没有账号,请<a href="/reg/">注册 </a>
+    {% endif %}
+
+    </div>
+    <!--主页面结束-->
+
+
+    <script src="/static/jquery-3.3.1.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/sweetalert/sweetalert.js"></script>
+</body>
+<script>
+    $("#yuding").click(function () {
+        var user_pk = $("#yuding").attr("user");
+        var room_pk = $("#room_pk").val();
+        var day = $("#day").val();
+        $("#yuding").attr("href", "/yuding/" + user_pk + "/" + room_pk + "/" + day);
+    })
+</script>
+</html>
+
+
